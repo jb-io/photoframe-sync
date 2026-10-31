@@ -1,0 +1,38 @@
+# Wöchentliche Updates für Actions, npm-Pakete und das Docker-Basis-Image.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+    ignore:
+      # typescript-eslint unterstützt TypeScript 7 noch nicht (siehe .dev/decisions.md)
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      # Node 22 LTS ist Zielplattform (NFA-01)
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # Basis bleibt node:22-slim (Kap. 5.1); nur Patch-/Digest-Updates
+      - dependency-name: node
+        update-types: [version-update:semver-major]

@@ -1,0 +1,30 @@
+# Nur Quellcode in den Build-Kontext – keine Zugangsdaten, keine lokalen Daten.
+# **/ sorgt dafür, dass die Muster auch in Unterordnern greifen.
+**/node_modules
+dist
+coverage
+testdata
+.local
+**/data
+**/cache
+**/certs
+**/*.pem
+**/*.key
+**/*.crt
+**/*.p12
+**/*.pfx
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.sqlite
+**/.env
+**/.env.*
+.git
+.github
+.dev
+.claude
+docs
+example
+test-results
+playwright-report
+**/*.log

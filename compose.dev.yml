@@ -1,0 +1,26 @@
+# Lokale Test-Umgebung: baut das Image aus dem Quellcode und bindet den
+# Test-Bilderordner (npm run photos:test) read-only ein.
+#
+#   docker compose -f compose.dev.yml up -d --build
+#
+# Zugangsdaten für Karte und Shelly stehen in .env (nicht eingecheckt).
+name: photoframe-sync-dev
+
+services:
+  photoframe-sync:
+    build: .
+    image: photoframe-sync:dev
+    container_name: photoframe-sync-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    env_file: .env
+    volumes:
+      - ./testdata/photos:/photos:ro
+      - dev_data:/data
+      - dev_cache:/cache
+
+volumes:
+  dev_data:
+  dev_cache:

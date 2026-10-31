@@ -1,0 +1,109 @@
+# CI und Veröffentlichung auf Docker Hub
+#
+# - Pull Requests: Lint, Typprüfung, Tests, Build; Docker-Image nur bauen (amd64), nicht pushen
+# - Push auf main: zusätzlich Multi-Arch-Image pushen (latest, sha-<kurz>)
+# - Tag v1.2.3:   zusätzlich 1.2.3, 1.2, 1 und latest
+#
+# Einrichtung im GitHub-Repository (Settings → Secrets and variables → Actions):
+#   Secrets:   DOCKERHUB_USERNAME, DOCKERHUB_TOKEN (Docker-Hub-Access-Token, Read & Write)
+#   Variablen: DOCKERHUB_IMAGE (optional, Standard "jbiohub/photoframe-sync"; Namespace nur Kleinbuchstaben und Ziffern)
+#              DOCKERHUB_UPDATE_DESCRIPTION = "true", um die README als Beschreibung auf Docker Hub zu übernehmen
+#              (Token braucht dann Read, Write & Delete)
+name: CI & Docker
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Veraltete PR-Läufe abbrechen, Pushes auf main und Tags immer zu Ende bauen
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE: ${{ vars.DOCKERHUB_IMAGE || 'jbiohub/photoframe-sync' }}
+  # Veröffentlicht wird nur von main und von Release-Tags – nie von PRs oder
+  # einem manuell gestarteten Lauf auf einem anderen Branch.
+  PUSH: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
+
+jobs:
+  test:
+    name: Lint, Typen, Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  docker:
+    name: Docker-Image
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-qemu-action@v4
+        if: env.PUSH == 'true'
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        if: env.PUSH == 'true'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          # latest: für main explizit, für Release-Tags automatisch (flavor latest=auto)
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=sha,prefix=sha-
+            type=ref,event=pr
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          # In PRs nur amd64 bauen (schnell, ohne QEMU), sonst Multi-Arch
+          platforms: ${{ env.PUSH == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          push: ${{ env.PUSH == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: ${{ env.PUSH == 'true' && 'mode=max' || 'false' }}
+          sbom: ${{ env.PUSH == 'true' }}
+          cache-from: type=gha
+          cache-to: ${{ env.PUSH == 'true' && 'type=gha,mode=max' || '' }}
+
+      - name: Beschreibung auf Docker Hub aktualisieren
+        if: env.PUSH == 'true' && github.ref == 'refs/heads/main' && vars.DOCKERHUB_UPDATE_DESCRIPTION == 'true'
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.IMAGE }}
+          short-description: Foto-Ordner vom Netzlaufwerk auf den digitalen Bilderrahmen (Toshiba FlashAir)
+          readme-filepath: ./README.md
+          # Relative Links (Screenshots, LICENSE) auf GitHub-URLs umschreiben
+          enable-url-completion: true

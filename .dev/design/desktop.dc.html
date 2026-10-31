@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Bilderrahmen Sync – Desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F4F7}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.app{--bg:#F3F4F7;--sf:#FFFFFF;--sf2:#F6F7F9;--seg:#E7E9EE;--ln:#E2E5EA;--ink:#0E1116;--ink2:#444C5A;--ink3:#5B6370;--acs:color-mix(in srgb,var(--ac) 10%,#fff);--act:color-mix(in srgb,var(--ac) 80%,#000);--amb:#FFF1D2;--ambi:#7A4F00;--ambd:#D9951A;--glass:rgba(255,255,255,.9);--glassi:#141824;--hdr:rgba(243,244,247,.82);--sh:0 1px 2px rgba(16,24,40,.05),0 8px 24px rgba(16,24,40,.06);--shh:0 2px 4px rgba(16,24,40,.06),0 16px 36px rgba(16,24,40,.12);font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+.app.dark{--bg:#0B0D11;--sf:#151820;--sf2:#1B1F28;--seg:#1E222C;--ln:#2A2F3A;--ink:#F2F4F8;--ink2:#C0C6D1;--ink3:#A0A7B4;--acs:color-mix(in srgb,var(--ac) 24%,#151820);--act:color-mix(in srgb,var(--ac) 50%,#fff);--amb:#3A2B0C;--ambi:#F7C76B;--ambd:#E8A93A;--glass:rgba(16,19,26,.82);--glassi:#F2F4F8;--hdr:rgba(11,13,17,.8);--sh:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);--shh:0 2px 4px rgba(0,0,0,.4),0 16px 36px rgba(0,0,0,.45)}
+.app.dark input{color-scheme:dark}
+.hdr{position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--ln)}
+.wrap{max-width:1440px;margin:0 auto;padding:0 32px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--ink);color:var(--bg);flex:none}
+.bt{display:block;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.bs{display:block;font-size:12.5px;color:var(--ink3);font-weight:500}
+.devpill{display:flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:var(--sf);border:1px solid var(--ln);box-shadow:var(--sh)}
+.net{display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 14px 0 12px;border:0;border-radius:999px;background:transparent;font-size:13.5px;font-weight:700;color:var(--ink3)}
+.net.on{color:var(--act);background:var(--acs)}
+.pwr{display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 15px 0 12px;border-radius:999px;border:0;background:var(--sf2);color:var(--ink2);font-size:13.5px;font-weight:700}
+.pwr.on{background:var(--ac);color:#fff}
+.pwr:disabled{opacity:.5;cursor:wait}
+.mframe{position:relative;width:76px;height:56px;flex:none;border-radius:9px;border:4px solid var(--ink);overflow:hidden;box-shadow:0 6px 14px rgba(16,24,40,.18)}
+.mfov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:4px;background:rgba(8,10,14,.82);color:#fff;font-size:9.5px;font-weight:700;line-height:1.2}
+.mframe.offl .mfov{display:flex}
+.spill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--acs);color:var(--act);white-space:nowrap}
+.spill.pending{background:var(--amb);color:var(--ambi)}
+.spill.dirty{background:var(--sf2);color:var(--ink2);box-shadow:inset 0 0 0 1px var(--ln)}
+.htitle{font-size:16px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.hsub{font-size:12.5px;color:var(--ink3);margin-top:2px;line-height:1.4}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dt{display:block;font-size:15px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.ds{display:block;font-size:12.5px;color:var(--ink3);font-weight:500;white-space:nowrap;text-align:right}
+.pri{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 20px;border:0;border-radius:15px;background:var(--ac);color:#fff;font-size:15px;font-weight:700;white-space:nowrap;box-shadow:0 6px 16px color-mix(in srgb,var(--ac) 35%,transparent)}
+.pri.offl{background:var(--ink);color:var(--bg);box-shadow:none}
+.pri:disabled{opacity:.75;cursor:default}
+.sec{height:46px;padding:0 16px;border-radius:14px;border:1px solid var(--ln);background:var(--sf);font-size:14px;font-weight:700}
+.card{background:var(--sf);border-radius:24px;padding:20px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:16px;min-width:0}
+.ch{margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em}
+.mode{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;border-radius:18px;background:var(--seg)}
+.mbtn{display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;border:0;border-radius:14px;background:transparent;text-align:left;color:var(--ink2)}
+.mbtn.act{background:var(--sf);color:var(--ink);box-shadow:var(--sh)}
+.mbtn.act .mi{background:var(--ac);color:#fff}
+.mi{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--sf);color:var(--ink3);flex:none}
+.mt{display:block;font-size:14px;font-weight:700}
+.ms{display:block;font-size:11.5px;color:var(--ink3);margin-top:1px}
+.search{display:flex;align-items:center;gap:8px;height:48px;padding:0 14px;border-radius:14px;background:var(--sf2);border:1px solid var(--ln);color:var(--ink3);min-width:0}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:15px;color:var(--ink)}
+.search input::placeholder{color:var(--ink3)}
+.lbl{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3)}
+.rbtn{width:44px;height:44px;border-radius:999px;border:1px solid var(--ln);background:var(--sf);display:grid;place-items:center;color:var(--ink);flex:none}
+.rbtn:hover:not(:disabled){background:var(--sf2)}
+.rbtn:disabled{opacity:.35;cursor:default}
+.bignum{font-size:60px;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;text-align:center}
+.bigunit{font-size:15px;font-weight:700;color:var(--ink2);text-align:center;margin-top:4px}
+.slider{-webkit-appearance:none;appearance:none;display:block;width:100%;height:44px;margin:0;background:transparent;cursor:pointer}
+.slider::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--ac) 0,var(--ac) var(--p),var(--ln) var(--p),var(--ln) 100%)}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-10px;border-radius:50%;border:0;background:#fff;box-shadow:0 0 0 6px color-mix(in srgb,var(--ac) 22%,transparent),0 2px 6px rgba(0,0,0,.28)}
+.slider::-moz-range-track{height:8px;border-radius:99px;background:var(--ln)}
+.slider::-moz-range-progress{height:8px;border-radius:99px;background:var(--ac)}
+.slider::-moz-range-thumb{width:28px;height:28px;border-radius:50%;border:0;background:#fff;box-shadow:0 0 0 6px color-mix(in srgb,var(--ac) 22%,transparent),0 2px 6px rgba(0,0,0,.28)}
+.ticks{position:relative;height:30px;margin-top:-4px}
+.tick{position:absolute;top:0;transform:translateX(-50%);min-width:32px;padding:6px 4px;border:0;background:none;font-size:12px;font-weight:700;color:var(--ink3);font-variant-numeric:tabular-nums}
+.tick:hover{color:var(--ink)}
+.tick.act{color:var(--act)}
+.bars{display:flex;align-items:flex-end;gap:2px;height:48px}
+.bar{flex:1;display:block;border-radius:3px 3px 1px 1px;background:color-mix(in srgb,var(--ink3) 28%,transparent)}
+.bar.in{background:var(--ac)}
+.axis{display:flex;font-size:11px;color:var(--ink3);margin-top:6px;font-weight:600}
+.info{display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border-radius:14px;background:var(--sf2);font-size:12.5px;line-height:1.45;color:var(--ink2)}
+.info svg{flex:none;margin-top:1px;color:var(--act)}
+.tl{display:flex;flex-direction:row-reverse;overflow-x:auto;padding:0 0 26px;scrollbar-width:thin}
+.mc{position:relative;flex:0 0 10px;height:64px;display:flex;align-items:flex-end;padding:0 1px;border:0;background:none}
+.mc:hover .b{background:var(--ink3)}
+.mc.in:hover .b{background:var(--act)}
+.mc.jan{box-shadow:inset 1px 0 0 var(--ln)}
+.mc .b{display:block;width:100%;border-radius:2px 2px 0 0;background:color-mix(in srgb,var(--ink3) 30%,transparent)}
+.mc.in .b{background:var(--ac)}
+.mc.anchor .b{background:var(--act);outline:2px solid var(--act);outline-offset:1px}
+.ylab{position:absolute;left:3px;top:100%;margin-top:6px;font-size:10.5px;font-weight:700;color:var(--ink3);white-space:nowrap}
+.fld{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0;font-size:12px;font-weight:700;color:var(--ink2)}
+.inp{height:46px;min-width:0;padding:0 12px;border:1px solid var(--ln);border-radius:12px;background:var(--sf2);color:var(--ink);font:inherit;font-size:14px}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:16px;border:2px solid var(--ln);background:var(--sf);text-align:left}
+.opt:hover{border-color:color-mix(in srgb,var(--ac) 40%,var(--ln))}
+.opt.act{border-color:var(--ac);background:var(--acs)}
+.radio{flex:none;width:22px;height:22px;margin-top:1px;border-radius:50%;border:2px solid var(--ink3);background:var(--sf)}
+.opt.act .radio{border:7px solid var(--ac)}
+.ot{display:block;font-size:14.5px;font-weight:700}
+.ox{display:block;margin-top:2px;font-size:12.5px;color:var(--ink3);line-height:1.4}
+.step{display:flex;align-items:center;gap:10px}
+.step input{width:92px;height:46px;text-align:center;border:1px solid var(--ln);border-radius:14px;background:var(--sf2);color:var(--ink);font:inherit;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+.pill{height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--ln);background:var(--sf);font-size:13px;font-weight:700}
+.pill.act{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg{display:inline-flex;padding:3px;border-radius:12px;background:var(--seg)}
+.seg button{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 13px;border:0;border-radius:9px;background:transparent;font-size:13.5px;font-weight:600;color:var(--ink2)}
+.seg button.act{background:var(--sf);color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.12)}
+.link{border:0;background:none;padding:10px 4px;font-size:13.5px;font-weight:700;color:var(--act)}
+.chip{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:999px;background:var(--acs);color:var(--act);font-size:13px;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;font-size:12.5px;color:var(--ink3);font-weight:600}
+.gh{display:flex;align-items:baseline;gap:12px;padding:26px 0 14px}
+.gh h2{margin:0;font-size:30px;font-weight:800;letter-spacing:-.025em}
+.gsub{font-size:13px;color:var(--ink3);font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:18px}
+.tile{position:relative;display:flex;flex-direction:column;padding:0;border:0;border-radius:20px;background:var(--sf);overflow:hidden;text-align:left;box-shadow:var(--sh);outline:3px solid transparent;outline-offset:3px;transition:outline-color .15s,box-shadow .2s,transform .2s}
+.tile:not(:disabled):hover{box-shadow:var(--shh);transform:translateY(-2px)}
+.tile.sel{outline-color:var(--ac)}
+.tile:disabled,.row:disabled{cursor:default;color:inherit;opacity:1}
+.ph{position:relative;display:block;aspect-ratio:4/3;overflow:hidden;background:var(--sf2)}
+.ph.loading{background:linear-gradient(100deg,var(--sf2) 30%,var(--ln) 50%,var(--sf2) 70%);background-size:220% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{from{background-position:120% 0}to{background-position:-100% 0}}
+.scene{position:absolute;inset:0;display:block;transition:transform .4s}
+.tile:not(:disabled):hover .scene{transform:scale(1.04)}
+.sc0{background:radial-gradient(circle at 72% 36%,#FFE6B8 0 8%,transparent 9%),radial-gradient(130% 60% at 28% 108%,#3B2A45 0 55%,transparent 56%),linear-gradient(180deg,#F7B98C 0%,#E88B7A 52%,#8C5D86 100%)}
+.sc1{background:radial-gradient(circle at 78% 26%,#FFFFFF 0 7%,transparent 8%),linear-gradient(180deg,#D3EEF7 0%,#93CDE4 54%,#2F86AD 55%,#1B5C80 100%)}
+.sc2{background:radial-gradient(95% 55% at 18% 104%,#2D573A 0 60%,transparent 61%),radial-gradient(85% 50% at 86% 104%,#3E7250 0 60%,transparent 61%),radial-gradient(circle at 60% 30%,#FFF6D8 0 7%,transparent 8%),linear-gradient(180deg,#E4F0DD 0%,#ABD0A6 100%)}
+.sc3{background:radial-gradient(70% 70% at 30% 100%,#FBFCFE 0 50%,transparent 51%),radial-gradient(60% 75% at 78% 100%,#EEF3F9 0 50%,transparent 51%),linear-gradient(180deg,#C9D7E7 0%,#9DB3CC 100%)}
+.sc4{background:radial-gradient(circle at 24% 28%,#F4F1DE 0 6%,transparent 7%),linear-gradient(0deg,#141729 0 22%,transparent 22%),linear-gradient(180deg,#252B49 0%,#4C548A 70%,#6A6FA0 100%)}
+.sc5{background:radial-gradient(circle at 70% 30%,#FFF4DA 0 9%,transparent 10%),radial-gradient(120% 55% at 70% 110%,#C99E62 0 55%,transparent 56%),radial-gradient(110% 50% at 15% 112%,#DDB879 0 55%,transparent 56%),linear-gradient(180deg,#F7ECD8 0%,#EED3A8 100%)}
+.check{position:absolute;top:12px;left:12px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:2px solid #fff;background:rgba(14,17,22,.28);color:transparent;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.sel .check{background:var(--ac);color:#fff}
+.auto .check{display:none}
+.fs{position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--glass);color:var(--glassi);font-size:11.5px;font-weight:700;white-space:nowrap;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.fs::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ac)}
+.fs.up{background:var(--amb);color:var(--ambi)}
+.fs.up::before{background:var(--ambd)}
+.fs.rm{box-shadow:inset 0 0 0 1.5px var(--ink3)}
+.fs.rm::before{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink3)}
+.legend .fs,.row .fs{position:static}
+.legend .fs{box-shadow:var(--sh)}
+.legend .fs.rm{box-shadow:inset 0 0 0 1.5px var(--ink3)}
+.cnt{position:absolute;left:12px;bottom:12px;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:999px;background:rgba(14,17,22,.62);color:#fff;font-size:12px;font-weight:700;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-variant-numeric:tabular-nums}
+.meta{display:flex;flex-direction:column;gap:3px;padding:12px 14px 14px;min-width:0}
+.name{font-size:15px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.date{font-size:12.5px;color:var(--ink3);font-weight:500;font-variant-numeric:tabular-nums}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:16px;width:100%;padding:8px 18px 8px 8px;border:0;border-radius:16px;background:var(--sf);text-align:left;box-shadow:var(--sh);outline:2px solid transparent;outline-offset:1px}
+.row:not(:disabled):hover{box-shadow:var(--shh)}
+.row.sel{outline-color:var(--ac)}
+.row .ph{width:72px;aspect-ratio:4/3;border-radius:11px;flex:none}
+.row .check{position:static;flex:none;border-color:var(--ln);background:var(--sf2)}
+.row.sel .check{background:var(--ac);border-color:var(--ac)}
+.rname{flex:2;min-width:0;display:flex;flex-direction:column;gap:3px}
+.fname{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcol{flex:1;min-width:0;font-size:13px;color:var(--ink2);font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:28px;padding-top:18px;border-top:1px solid var(--ln)}
+.psize{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink2)}
+.sel-in{height:42px;padding:0 10px;border-radius:11px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);font:inherit;font-weight:700}
+.pbtns{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.empty{padding:64px 16px;text-align:center;color:var(--ink3);font-size:15px;background:var(--sf);border-radius:24px;margin-top:18px}
+</style>
+</helmet>
+<div class="app {{themeCls}}" style="--ac: {{accent}}; min-height: 100vh">
+  <header class="hdr">
+    <div class="wrap" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; padding-top: 14px; padding-bottom: 14px">
+      <div class="brand" style="flex: 0 0 auto">
+        <span class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><path d="m7 16 3.5-4 2.5 3 2-2 2 3"></path><circle cx="15.5" cy="8.5" r="1.3"></circle></svg></span>
+        <span><span class="bt">Bilderrahmen</span><span class="bs">Ordner-Sync</span></span>
+      </div>
+      <div style="flex: 1 1 380px; min-width: 0; display: flex; align-items: center; gap: 14px" role="status">
+        <span class="mframe {{frameCls}}" aria-hidden="true"><span class="scene sc1"></span><span class="mfov">{{frameBadge}}</span></span>
+        <div style="min-width: 0">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+            <span class="spill {{stCls}}">
+              <sc-if value="{{stOk}}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></sc-if>
+              <sc-if value="{{stPending}}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></sc-if>
+              <sc-if value="{{stSync}}" hint-placeholder-val="{{ false }}"><svg class="spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg></sc-if>
+              <sc-if value="{{stDirty}}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg></sc-if>
+              {{stTitle}}
+            </span>
+            <span class="htitle">{{heroTitle}}</span>
+          </div>
+          <div class="hsub">{{stText}}</div>
+        </div>
+      </div>
+      <div class="devpill" style="flex: 0 0 auto">
+        <button class="net {{netCls}}" onClick="{{toggleOnline}}" aria-label="{{devAria}}" title="{{devAria}}">
+          <sc-if value="{{devOnline}}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><path d="M12 20h.01"></path></svg></sc-if>
+          <sc-if value="{{devOffline}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20"></path><path d="M8.5 16.5a5 5 0 0 1 7 0"></path><path d="M2 8.82a15 15 0 0 1 4.17-2.65"></path><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"></path><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"></path><path d="M5 13a10 10 0 0 1 5.24-2.76"></path><path d="M12 20h.01"></path></svg></sc-if>
+          {{devLabel}}
+        </button>
+        <button class="pwr {{pwrCls}}" onClick="{{togglePower}}" disabled="{{pwrDisabled}}" aria-pressed="{{pwrPressed}}" aria-label="{{pwrAria}}" title="{{pwrAria}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10"></path><path d="M18.4 6.6a9 9 0 1 1-12.8 0"></path></svg>{{pwrLabel}}</button>
+      </div>
+      <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 16px; margin-left: auto">
+        <div>
+          <span class="dt">{{selCount}} Ordner · {{selItems}} Bilder</span>
+          <span class="ds">{{footSummary}}</span>
+        </div>
+        <button class="pri {{btnCls}}" onClick="{{onSync}}" disabled="{{syncing}}">
+          <sc-if value="{{syncing}}" hint-placeholder-val="{{ false }}"><svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg></sc-if>
+          {{btnLabel}}
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap" style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 28px; padding-top: 28px; padding-bottom: 48px">
+    <aside style="flex: 1 1 320px; max-width: 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+      <section class="card" aria-label="Auswahl">
+        <h2 class="ch">Auswahl</h2>
+        <div class="mode" role="radiogroup" aria-label="Auswahlmodus">
+          <button class="mbtn {{autoCls}}" role="radio" aria-checked="{{autoAria}}" onClick="{{setAuto}}">
+            <span class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path><path d="M12 7v5l3 2"></path></svg></span>
+            <span><span class="mt">Automatisch</span><span class="ms">nach Zeitraum</span></span>
+          </button>
+          <button class="mbtn {{manCls}}" role="radio" aria-checked="{{manAria}}" onClick="{{setManual}}">
+            <span class="mi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg></span>
+            <span><span class="mt">Manuell</span><span class="ms">Ordner einzeln</span></span>
+          </button>
+        </div>
+
+        <sc-if value="{{isAuto}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <div class="lbl" style="text-align: center">Immer synchronisieren · letzte</div>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <button class="rbtn" onClick="{{winDec}}" disabled="{{winMin}}" aria-label="Einen Monat weniger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+              <div style="flex: 1">
+                <div class="bignum">{{win}}</div>
+                <div class="bigunit">{{winUnit}} <span style="color: var(--ink3); font-weight: 600">{{winSub}}</span></div>
+              </div>
+              <button class="rbtn" onClick="{{winInc}}" disabled="{{winMax}}" aria-label="Einen Monat mehr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+            </div>
+            <div>
+              <input class="slider" style="--p: {{winPct}}" type="range" min="1" max="36" step="1" value="{{win}}" onChange="{{onWin}}" aria-label="Zeitraum in Monaten" aria-valuetext="{{winLabel}}">
+              <div class="ticks"><sc-for list="{{winTicks}}" as="w" hint-placeholder-count="7"><button class="tick {{w.cls}}" style="left: {{w.left}}" onClick="{{w.pick}}" aria-label="{{w.long}}">{{w.short}}</button></sc-for></div>
+            </div>
+            <div aria-hidden="true">
+              <div class="bars"><sc-for list="{{autoMonths}}" as="mo" hint-placeholder-count="36"><span class="bar {{mo.cls}}" style="height: {{mo.h}}"></span></sc-for></div>
+              <div class="axis"><span style="flex: 2">’23</span><span style="flex: 12">2024</span><span style="flex: 12">2025</span><span style="flex: 10">2026</span></div>
+            </div>
+            <div class="info"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>{{autoText}}</span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isManual}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+            <label class="search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+              <input type="search" placeholder="Ordnername suchen" aria-label="Ordnername suchen" value="{{q}}" onChange="{{onSearch}}">
+            </label>
+            <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+              <span class="lbl">Zeitraum filtern</span>
+              <div class="tl" role="group" aria-label="Zeitstrahl 1991 bis heute">
+                <sc-for list="{{manMonths}}" as="mo" hint-placeholder-count="40"><button class="mc {{mo.cls}}" onClick="{{mo.pick}}" aria-label="{{mo.aria}}" title="{{mo.aria}}"><span class="b" style="height: {{mo.h}}"></span><sc-if value="{{mo.jan}}" hint-placeholder-val="{{ false }}"><span class="ylab">{{mo.y}}</span></sc-if></button></sc-for>
+              </div>
+              <div style="font-size: 12.5px; color: var(--ink3)">{{tlHint}} · seitlich scrollen bis 1991</div>
+            </div>
+            <div style="display: flex; gap: 10px">
+              <label class="fld">Von<input class="inp" type="date" min="1991-01-01" value="{{from}}" onChange="{{onFrom}}"></label>
+              <label class="fld">Bis<input class="inp" type="date" min="1991-01-01" value="{{to}}" onChange="{{onTo}}"></label>
+            </div>
+            <div class="info"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg><span>{{relText}}</span></div>
+            <button class="sec" onClick="{{resetFilter}}">Filter zurücksetzen</button>
+          </div>
+        </sc-if>
+      </section>
+
+      <section class="card" aria-label="Übertragung">
+        <h2 class="ch">Übertragung</h2>
+        <div style="display: flex; flex-direction: column; gap: 8px" role="radiogroup" aria-label="Umfang pro Ordner">
+          <button class="opt {{scopeAllCls}}" role="radio" aria-checked="{{scopeAllAria}}" onClick="{{setScopeAll}}"><span class="radio"></span><span><span class="ot">Alle Bilder</span><span class="ox">Jeder Ordner wird vollständig übertragen.</span></span></button>
+          <button class="opt {{scopeLimitCls}}" role="radio" aria-checked="{{scopeLimitAria}}" onClick="{{setScopeLimit}}"><span class="radio"></span><span><span class="ot">Begrenzt pro Ordner</span><span class="ox">Je Ordner höchstens die eingestellte Anzahl Bilder.</span></span></button>
+        </div>
+        <sc-if value="{{scopeLimit}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span class="lbl">Bilder pro Ordner</span>
+            <div class="step">
+              <button class="rbtn" onClick="{{perDec}}" aria-label="Weniger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+              <input type="number" min="1" max="999" value="{{per}}" onChange="{{onPer}}" aria-label="Bilder pro Ordner">
+              <button class="rbtn" onClick="{{perInc}}" aria-label="Mehr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <sc-for list="{{perOpts}}" as="o" hint-placeholder-count="4"><button class="pill {{o.cls}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <div class="info"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>{{scopeResult}}</span></div>
+      </section>
+    </aside>
+
+    <main style="flex: 999 1 560px; min-width: 0">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <div class="seg" role="group" aria-label="Ansicht">
+          <button class="{{gridCls}}" onClick="{{setGrid}}" aria-pressed="{{gridPressed}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg>Kacheln</button>
+          <button class="{{listCls}}" onClick="{{setList}}" aria-pressed="{{listPressed}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg>Liste</button>
+        </div>
+        <div class="seg" role="group" aria-label="Gruppierung">
+          <button class="{{yearCls}}" onClick="{{setYear}}" aria-pressed="{{yearPressed}}">Nach Jahr</button>
+          <button class="{{monthCls}}" onClick="{{setMonth}}" aria-pressed="{{monthPressed}}">Nach Monat</button>
+        </div>
+        <span style="margin-left: auto; font-size: 13.5px; color: var(--ink3); font-weight: 600">{{resultText}}</span>
+        <sc-if value="{{isManual}}" hint-placeholder-val="{{ true }}"><button class="link" onClick="{{clearSel}}">Auswahl leeren</button></sc-if>
+        <sc-if value="{{isAuto}}" hint-placeholder-val="{{ false }}"><span class="chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg>{{winLabel}}</span></sc-if>
+      </div>
+      <div class="legend" aria-label="Legende">
+        <span>Status</span>
+        <span class="fs on">Auf dem Rahmen</span>
+        <span class="fs up">Upload ausstehend</span>
+        <span class="fs rm">Wird entfernt</span>
+      </div>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}"><div class="empty">{{emptyText}}</div></sc-if>
+
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+        <section>
+          <div class="gh">
+            <h2>{{g.label}}</h2>
+            <span class="gsub">{{g.sub}}</span>
+            <sc-if value="{{isManual}}" hint-placeholder-val="{{ true }}"><button class="link" style="margin-left: auto" onClick="{{g.toggleAll}}">{{g.toggleLabel}} auswählen</button></sc-if>
+          </div>
+          <sc-if value="{{isGrid}}" hint-placeholder-val="{{ true }}">
+            <div class="grid">
+              <sc-for list="{{g.folders}}" as="f" hint-placeholder-count="5">
+                <button class="tile {{f.cls}}" onClick="{{f.toggle}}" disabled="{{isAuto}}" aria-pressed="{{f.pressed}}" aria-label="{{f.aria}}">
+                  <span class="ph {{f.phCls}}">
+                    <sc-if value="{{f.loaded}}" hint-placeholder-val="{{ true }}"><span class="scene {{f.tone}}"></span></sc-if>
+                    <span class="check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span>
+                    <sc-if value="{{f.hasFs}}" hint-placeholder-val="{{ false }}"><span class="fs {{f.fsCls}}">{{f.fsLabel}}</span></sc-if>
+                    <span class="cnt"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-5-5L5 21"></path></svg>{{f.countLabel}}</span>
+                  </span>
+                  <span class="meta"><span class="name">{{f.title}}</span><span class="date">{{f.dateLabel}}</span></span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{isList}}" hint-placeholder-val="{{ false }}">
+            <div class="list">
+              <sc-for list="{{g.folders}}" as="f" hint-placeholder-count="5">
+                <button class="row {{f.cls}}" onClick="{{f.toggle}}" disabled="{{isAuto}}" aria-pressed="{{f.pressed}}" aria-label="{{f.aria}}">
+                  <span class="ph {{f.phCls}}"><sc-if value="{{f.loaded}}" hint-placeholder-val="{{ true }}"><span class="scene {{f.tone}}"></span></sc-if></span>
+                  <span class="rname"><span class="name">{{f.title}}</span><span class="fname">{{f.name}}</span></span>
+                  <span class="rcol"><sc-if value="{{f.hasFs}}" hint-placeholder-val="{{ false }}"><span class="fs {{f.fsCls}}">{{f.fsLabel}}</span></sc-if></span>
+                  <span class="rcol">{{f.dateLabel}}</span>
+                  <span class="rcol" style="text-align: right">{{f.countLong}}</span>
+                  <sc-if value="{{isManual}}" hint-placeholder-val="{{ true }}"><span class="check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span></sc-if>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </section>
+      </sc-for>
+
+      <div class="pager">
+        <label class="psize">Zeige
+          <select class="sel-in" value="{{pageSize}}" onChange="{{onSize}}" aria-label="Ordner pro Seite">
+            <sc-for list="{{sizeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.label}}</option></sc-for>
+          </select>
+          Ordner pro Seite
+        </label>
+        <span style="font-size: 13.5px; color: var(--ink3); font-weight: 600">{{rangeText}}</span>
+        <sc-if value="{{hasPages}}" hint-placeholder-val="{{ true }}">
+          <div class="pbtns">
+            <button class="rbtn" onClick="{{prev}}" disabled="{{prevDisabled}}" aria-label="Vorherige Seite"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+            <span>{{pageText}}</span>
+            <button class="rbtn" onClick="{{next}}" disabled="{{nextDisabled}}" aria-label="Nächste Seite"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+          </div>
+        </sc-if>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"accent":{"editor":"color","default":"#3D5AFE","options":["#3D5AFE","#0F766E","#C2410C","#7C3AED"]},"$preview":{"width":1440,"height":1180}}'>
+const TODAY = '2026-10-31';
+const RAW = [
+  ['2026-10-18_Herbstwanderung_Allgäu',142],['2026-10-03_Grillabend',37],['2026-09-14_Hochzeit_Lena_und_Tom',412],
+  ['2026-08-22_Kroatien_Urlaub',868],['2026-08-02_Sommerfest_Garten',64],['2026-07-11_Radtour_Bodensee',121],
+  ['2026-05-29_Pfingsten_bei_Oma',45],['2026-04-05_Ostern',78],['2026-02-14_Skiurlaub_Zillertal',233],['2026-01-01_Neujahr',52],
+  ['2025-12-24_Weihnachten',96],['2025-11-09_Laternenumzug',28],['2025-09-27_Herbstmarkt',41],['2025-08-10_Toskana',734],
+  ['2025-06-21_Sonnenwende',33],['2025-05-01_Maiwanderung',57],['2025-03-16_Geburtstag_Paul',89],['2025-01-18_Winterspaziergang',22],
+  ['2024-12-31_Silvester',61],['2024-10-12_Umzug',74],['2024-07-20_Norwegen_Roadtrip',1021],['2024-04-28_Konfirmation',118],['2024-02-10_Fasching',47],
+  ['2023-08-15_Sommer_Südtirol',345],['2022-12-24_Weihnachten',81],['2021-07-24_Camping_Dänemark',212],['2020-04-12_Ostern_zuhause',39],
+  ['2018-10-20_Herbst_Schwarzwald',54],['2016-06-04_Richtfest',76],['2013-08-10_Kanada_Rundreise',987],['2011-03-19_Geburt_Mia',301],
+  ['2008-09-06_Hochzeit',512],['2005-05-21_Studienfahrt_Prag',143],['2002-07-14_Abiball',88],['1999-12-31_Millennium',64],
+  ['1996-08-03_Ostsee',52],['1993-12-24_Weihnachten',36],['1991-06-15_Urlaub_Gardasee',48]
+];
+const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const FOLDERS = RAW.map(function (r, i) {
+  var n = r[0], date = n.slice(0, 10), p = date.split('-');
+  return { name: n, count: r[1], date: date, y: p[0], m: p[1], title: n.slice(11).replace(/_/g, ' '), dateLabel: p[2] + '.' + p[1] + '.' + p[0], tone: 'sc' + (i % 6), idx: i };
+});
+const SUMS = {}, CNT = {};
+FOLDERS.forEach(function (f) { var k = f.date.slice(0, 7); SUMS[k] = (SUMS[k] || 0) + f.count; CNT[k] = (CNT[k] || 0) + 1; });
+const INITIAL = { '2026-10-18_Herbstwanderung_Allgäu': true, '2026-08-22_Kroatien_Urlaub': true, '2025-12-24_Weihnachten': true };
+const TICKS = [1, 6, 12, 18, 24, 30, 36];
+function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function de(s) { var p = s.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
+function fmt(n) { return n.toLocaleString('de-DE'); }
+function ymLabel(k) { var p = k.split('-'); return MONTHS[+p[1] - 1] + ' ' + p[0]; }
+function ymEnd(k) { var p = k.split('-'); return k + '-' + String(new Date(+p[0], +p[1], 0).getDate()).padStart(2, '0'); }
+function winFrom(n) { var d = new Date(TODAY + 'T12:00:00'); d.setMonth(d.getMonth() - n); return iso(d); }
+function winLabel(n) { return n === 1 ? 'Letzter Monat' : 'Letzte ' + n + ' Monate'; }
+function winSub(n) { return n % 12 === 0 ? '· ' + (n / 12) + (n === 12 ? ' Jahr' : ' Jahre') : n > 12 ? '· ≈ ' + (n / 12).toFixed(1).replace('.', ',') + ' Jahre' : ''; }
+function keys(o) { return Object.keys(o).filter(function (k) { return o[k]; }).sort().join('|'); }
+function nowLabel() { var d = new Date(); return d.toLocaleDateString('de-DE') + ' · ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); }
+
+class Component extends DCLogic {
+  state = { mode: 'manual', win: 12, savedMode: 'manual', savedWin: 12, power: true, booting: false,
+    view: 'grid', group: 'year', from: '', to: '', q: '', sel: Object.assign({}, INITIAL), saved: Object.assign({}, INITIAL), onFrame: Object.assign({}, INITIAL),
+    online: true, pending: false, syncing: false, lastSync: '27.10.2026 · 21:14', loaded: 0, tlStart: null, pageSize: 12, page: 0,
+    scope: 'all', per: 50, savedScope: 'all', savedPer: 50 };
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if (this.state.loaded >= FOLDERS.length) { clearInterval(this.timer); return; }
+      this.setState({ loaded: this.state.loaded + 3 });
+    }, 260);
+  }
+  componentWillUnmount() { clearInterval(this.timer); clearTimeout(this.st); clearTimeout(this.bt); }
+  filtered() {
+    var s = this.state, ql = s.q.trim().toLowerCase();
+    return FOLDERS.filter(function (f) { return (!s.from || f.date >= s.from) && (!s.to || f.date <= s.to) && (!ql || f.name.toLowerCase().indexOf(ql) >= 0); });
+  }
+  toggle(name) { if (this.state.mode === 'auto') return; var sel = Object.assign({}, this.state.sel); if (sel[name]) delete sel[name]; else sel[name] = true; this.setState({ sel: sel }); }
+  pickMonth(ym) {
+    var a = this.state.tlStart;
+    if (!a) return this.setState({ tlStart: ym, from: ym + '-01', to: ymEnd(ym), page: 0 });
+    var lo = a < ym ? a : ym, hi = a < ym ? ym : a;
+    this.setState({ tlStart: null, from: lo + '-01', to: ymEnd(hi), page: 0 });
+  }
+  setWin(n) { this.setState({ win: Math.max(1, Math.min(36, n)), page: 0 }); }
+  setPer(v) { v = parseInt(v, 10); if (isNaN(v)) return; this.setState({ per: Math.max(1, Math.min(999, v)) }); }
+  startSync() {
+    this.setState({ syncing: true });
+    clearTimeout(this.st);
+    this.st = setTimeout(() => this.setState({ syncing: false, pending: false, lastSync: nowLabel(), onFrame: Object.assign({}, this.state.saved) }), 1600);
+  }
+  onSync(eff) {
+    var s = this.state, upd = { saved: Object.assign({}, eff), savedScope: s.scope, savedPer: s.per, savedMode: s.mode, savedWin: s.win };
+    if (s.online) { this.setState(upd); this.startSync(); }
+    else { upd.pending = true; this.setState(upd); }
+  }
+  goOnline(online) {
+    var s = this.state;
+    this.setState({ online: online });
+    if (online && s.pending) this.startSync();
+    if (!online && s.syncing) { clearTimeout(this.st); this.setState({ syncing: false, pending: true }); }
+  }
+  toggleOnline() { var s = this.state; if (!s.power || s.booting) return; this.goOnline(!s.online); }
+  togglePower() {
+    var s = this.state;
+    if (s.booting) return;
+    if (s.power) { this.setState({ power: false }); this.goOnline(false); return; }
+    this.setState({ power: true, booting: true });
+    clearTimeout(this.bt);
+    this.bt = setTimeout(() => { this.setState({ booting: false }); this.goOnline(true); }, 1800);
+  }
+  months(y0, m0, r0, r1, withAnchor) {
+    var s = this.state, self = this, out = [];
+    for (var y = y0; y <= 2026; y++) for (var m = (y === y0 ? m0 : 1); m <= 12; m++) {
+      if (y === 2026 && m > 10) break;
+      (function (y, m) {
+        var ym = y + '-' + String(m).padStart(2, '0'), sum = SUMS[ym] || 0, cnt = CNT[ym] || 0;
+        var inR = (!r0 || ym >= r0.slice(0, 7)) && (!r1 || ym <= r1.slice(0, 7));
+        out.push({ h: (sum ? Math.min(58, Math.round(8 + Math.sqrt(sum) * 1.5)) : 3) + 'px', cls: (inR ? 'in' : '') + (m === 1 ? ' jan' : '') + (withAnchor && s.tlStart === ym ? ' anchor' : ''),
+          jan: m === 1, y: String(y), aria: MONTHS[m - 1] + ' ' + y + ': ' + cnt + ' Ordner', pick: function () { self.pickMonth(ym); } });
+      })(y, m);
+    }
+    return out;
+  }
+  renderVals() {
+    var s = this.state, self = this, auto = s.mode === 'auto', aFrom = winFrom(s.win);
+    var list = auto ? FOLDERS.filter(function (f) { return f.date >= aFrom; }) : this.filtered();
+    var eff = {};
+    if (auto) list.forEach(function (f) { eff[f.name] = true; }); else eff = s.sel;
+    var lim = s.scope === 'limit';
+    var n = function (f) { return lim ? Math.min(s.per, f.count) : f.count; };
+    var sizes = [12, 24, 48, 0], size = s.pageSize;
+    var pages = size ? Math.max(1, Math.ceil(list.length / size)) : 1, page = Math.min(s.page, pages - 1);
+    var pageList = size ? list.slice(page * size, page * size + size) : list;
+    var mk = function (f) {
+      var sel = !!eff[f.name], loaded = f.idx < s.loaded, on = !!s.onFrame[f.name], cut = lim && f.count > s.per;
+      var fst = sel && on ? ['on', 'Auf dem Rahmen'] : sel ? ['up', 'Upload ausstehend'] : on ? ['rm', 'Wird entfernt'] : ['', ''];
+      return Object.assign({}, f, { fsCls: fst[0], fsLabel: fst[1], hasFs: !!fst[0],
+        countLabel: cut ? s.per + ' / ' + fmt(f.count) : fmt(f.count), countLong: cut ? s.per + ' von ' + fmt(f.count) + ' Bildern' : fmt(f.count) + ' Bilder',
+        cls: auto ? 'auto' : (sel ? 'sel' : ''), pressed: sel ? 'true' : 'false', loaded: loaded, phCls: loaded ? '' : 'loading',
+        toggle: function () { self.toggle(f.name); }, aria: (auto ? 'Automatisch enthalten: ' : sel ? 'Abwählen: ' : 'Auswählen: ') + f.title + ', ' + f.dateLabel });
+    };
+    var groups = [], byKey = {};
+    pageList.forEach(function (f) {
+      var key = s.group === 'year' ? f.y : f.y + '-' + f.m;
+      if (!byKey[key]) { byKey[key] = { label: s.group === 'year' ? f.y : MONTHS[+f.m - 1] + ' ' + f.y, raw: [] }; groups.push(byKey[key]); }
+      byKey[key].raw.push(f);
+    });
+    groups = groups.map(function (g) {
+      var all = g.raw.every(function (f) { return s.sel[f.name]; });
+      var items = g.raw.reduce(function (a, f) { return a + f.count; }, 0);
+      return { label: g.label, sub: g.raw.length + ' Ordner · ' + fmt(items) + ' Bilder', folders: g.raw.map(mk), toggleLabel: all ? 'Keine' : 'Alle',
+        toggleAll: function () { var sel = Object.assign({}, s.sel); g.raw.forEach(function (f) { if (all) delete sel[f.name]; else sel[f.name] = true; }); self.setState({ sel: sel }); } };
+    });
+    var selF = FOLDERS.filter(function (f) { return eff[f.name]; });
+    var selAll = selF.reduce(function (a, f) { return a + f.count; }, 0), selN = selF.reduce(function (a, f) { return a + n(f); }, 0);
+    var dirty = keys(eff) !== keys(s.saved) || s.mode !== s.savedMode || (auto && s.win !== s.savedWin) || s.scope !== s.savedScope || (lim && s.per !== s.savedPer);
+    var savedDesc = s.savedMode === 'auto' ? 'Automatisch · ' + winLabel(s.savedWin) : 'Manuelle Auswahl';
+    var listItems = list.reduce(function (a, f) { return a + f.count; }, 0);
+    var st;
+    if (s.syncing) st = ['syncing', 'Synchronisiere', selF.length + ' Ordner · ' + fmt(selN) + ' Bilder werden übertragen …'];
+    else if (s.pending) st = ['pending', 'Sync ausstehend', !s.power ? 'Rahmen ist ausgeschaltet – Sync startet nach dem Einschalten automatisch.' : 'Gespeichert – startet automatisch, sobald der Rahmen online ist.'];
+    else if (dirty) st = ['dirty', 'Nicht gespeichert', 'Zuletzt synchronisiert ' + s.lastSync];
+    else st = ['ok', 'Aktuell', 'Zuletzt synchronisiert ' + s.lastSync];
+    var hasRange = !!(s.from || s.to);
+    return {
+      themeCls: this.props.dark ? 'dark' : '', accent: this.props.accent ?? '#3D5AFE',
+      devOnline: s.online, devOffline: !s.online, netCls: s.online ? 'on' : '', devLabel: s.booting ? 'startet …' : s.online ? 'online' : 'offline',
+      devAria: !s.power ? 'Rahmen ausgeschaltet – offline' : 'Rahmen ' + (s.online ? 'online' : 'offline') + ' (Demo: Verbindung umschalten)', toggleOnline: () => this.toggleOnline(),
+      pwrCls: s.power ? 'on' : '', pwrPressed: s.power ? 'true' : 'false', pwrDisabled: s.booting, pwrLabel: s.booting ? 'Startet' : s.power ? 'An' : 'Aus',
+      pwrAria: s.booting ? 'Rahmen startet …' : s.power ? 'Rahmen ist eingeschaltet – ausschalten' : 'Rahmen ist ausgeschaltet – einschalten',
+      togglePower: () => this.togglePower(),
+      frameCls: !s.power || !s.online ? 'offl' : '', frameBadge: !s.power ? 'Ausgeschaltet' : s.booting ? 'Startet …' : 'Nicht erreichbar',
+      stCls: st[0], stTitle: st[1], stText: st[2], stOk: st[0] === 'ok', stPending: st[0] === 'pending', stSync: st[0] === 'syncing', stDirty: st[0] === 'dirty',
+      heroTitle: savedDesc,
+      isAuto: auto, isManual: !auto, autoCls: auto ? 'act' : '', manCls: auto ? '' : 'act', autoAria: auto ? 'true' : 'false', manAria: auto ? 'false' : 'true',
+      setAuto: () => this.setState({ mode: 'auto', page: 0 }),
+      setManual: () => this.setState(auto ? { mode: 'manual', sel: Object.assign({}, eff), page: 0 } : { mode: 'manual' }),
+      win: s.win, winLabel: winLabel(s.win), winUnit: s.win === 1 ? 'Monat' : 'Monate', winSub: winSub(s.win), winPct: ((s.win - 1) / 35 * 100).toFixed(2) + '%',
+      onWin: (e) => this.setWin(+e.target.value), winDec: () => this.setWin(s.win - 1), winInc: () => this.setWin(s.win + 1), winMin: s.win <= 1, winMax: s.win >= 36,
+      winTicks: TICKS.map(function (t) { return { short: String(t), long: winLabel(t), left: 'calc(14px + (100% - 28px) * ' + ((t - 1) / 35).toFixed(4) + ')', cls: t === s.win ? 'act' : '', pick: function () { self.setWin(t); } }; }),
+      autoMonths: this.months(2023, 11, aFrom, '', false), manMonths: this.months(1991, 1, s.from, s.to, true).reverse(),
+      autoText: 'Aktuell ' + list.length + ' Ordner mit ' + fmt(selN) + ' Bildern (ab ' + de(aFrom) + '). Neue Ordner kommen automatisch dazu, ältere fallen heraus.',
+      q: s.q, onSearch: (e) => this.setState({ q: e.target.value, page: 0 }),
+      from: s.from, to: s.to,
+      onFrom: (e) => this.setState({ from: e.target.value, tlStart: null, page: 0 }), onTo: (e) => this.setState({ to: e.target.value, tlStart: null, page: 0 }),
+      relText: hasRange ? 'Angezeigt: ' + (s.from ? de(s.from) : 'Anfang') + ' – ' + (s.to ? de(s.to) : 'heute') : 'Kein Zeitraum gesetzt – alle Ordner seit 1991 sichtbar.',
+      tlHint: s.tlStart ? 'Start ' + ymLabel(s.tlStart) + ' – jetzt Endmonat anklicken' : 'Startmonat, dann Endmonat anklicken',
+      resetFilter: () => this.setState({ from: '', to: '', q: '', tlStart: null, page: 0 }),
+      clearSel: () => this.setState({ sel: {} }),
+      resultText: (auto ? 'Im Zeitraum: ' : 'Sichtbar: ') + list.length + ' Ordner · ' + fmt(listItems) + ' Bilder',
+      isGrid: s.view === 'grid', isList: s.view === 'list', gridCls: s.view === 'grid' ? 'act' : '', listCls: s.view === 'list' ? 'act' : '',
+      gridPressed: s.view === 'grid' ? 'true' : 'false', listPressed: s.view === 'list' ? 'true' : 'false',
+      setGrid: () => this.setState({ view: 'grid' }), setList: () => this.setState({ view: 'list' }),
+      yearCls: s.group === 'year' ? 'act' : '', monthCls: s.group === 'month' ? 'act' : '',
+      yearPressed: s.group === 'year' ? 'true' : 'false', monthPressed: s.group === 'month' ? 'true' : 'false',
+      setYear: () => this.setState({ group: 'year' }), setMonth: () => this.setState({ group: 'month' }),
+      groups: groups, isEmpty: list.length === 0, emptyText: auto ? 'In diesem Zeitraum gibt es keine Ordner.' : 'Keine Ordner für diesen Zeitraum bzw. diese Suche.',
+      sizeOpts: sizes.map(function (k) { return { v: String(k), label: k ? String(k) : 'Alle' }; }),
+      pageSize: String(size), onSize: (e) => this.setState({ pageSize: +e.target.value, page: 0 }),
+      pageText: 'Seite ' + (page + 1) + ' von ' + pages,
+      rangeText: list.length ? (size ? (page * size + 1) + '–' + Math.min(list.length, (page + 1) * size) : '1–' + list.length) + ' von ' + list.length + ' Ordnern' : '0 Ordner',
+      hasPages: pages > 1, prevDisabled: page === 0, nextDisabled: page >= pages - 1,
+      prev: () => this.setState({ page: Math.max(0, page - 1) }), next: () => this.setState({ page: Math.min(pages - 1, page + 1) }),
+      scopeLimit: lim, scopeAllCls: lim ? '' : 'act', scopeLimitCls: lim ? 'act' : '', scopeAllAria: lim ? 'false' : 'true', scopeLimitAria: lim ? 'true' : 'false',
+      setScopeAll: () => this.setState({ scope: 'all' }), setScopeLimit: () => this.setState({ scope: 'limit' }),
+      per: s.per, onPer: (e) => this.setPer(e.target.value), perDec: () => this.setPer(s.per - 5), perInc: () => this.setPer(s.per + 5),
+      perOpts: [10, 25, 50, 100].map(function (k) { return { label: String(k), cls: s.per === k ? 'act' : '', pick: function () { self.setState({ per: k }); } }; }),
+      footSummary: (auto ? winLabel(s.win) : 'Manuelle Auswahl') + ' · ' + (lim ? 'max. ' + s.per + ' je Ordner' : 'alle Bilder'),
+      scopeResult: 'Aktuelle Auswahl: ' + fmt(selN) + (lim ? ' von ' + fmt(selAll) : '') + ' Bildern aus ' + selF.length + ' Ordnern werden übertragen.',
+      selCount: selF.length, selItems: fmt(selN),
+      syncing: s.syncing, onSync: () => this.onSync(eff), btnCls: s.online ? '' : 'offl',
+      btnLabel: s.syncing ? 'Synchronisiere …' : s.online ? (dirty ? 'Speichern & synchronisieren' : 'Jetzt synchronisieren') : (dirty ? 'Auswahl speichern' : 'Gespeichert – Sync ausstehend')
+    };
+  }
+}
+</script>
+</body>
+</html>

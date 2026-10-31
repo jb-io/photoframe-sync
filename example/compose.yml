@@ -1,0 +1,24 @@
+# Bilderrahmen Sync – zieht das fertige Image von Docker Hub.
+# Schnellstart: diese Datei und .env.dist in einen eigenen Ordner kopieren,
+# .env.dist in .env umbenennen, Werte eintragen, dann: docker compose up -d
+services:
+  photoframe-sync:
+    image: jbiohub/photoframe-sync:latest
+    container_name: photoframe-sync
+    env_file: .env
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+      # Nur nötig mit HTTPS_ENABLED=true
+      - "${HTTPS_PORT:-8443}:${HTTPS_PORT:-8443}"
+    volumes:
+      # Bilderordner vom Netzlaufwerk (auf dem Host per NFS/SMB eingehängt), nur lesend
+      - ${PHOTOS_PATH:?PHOTOS_PATH in .env setzen}:/photos:ro
+      - photoframe_data:/data
+      - photoframe_cache:/cache
+      # Optional: eigenes Zertifikat (TLS_CERT_FILE/TLS_KEY_FILE auf /certs/… setzen)
+      # - ./certs:/certs:ro
+    restart: unless-stopped
+
+volumes:
+  photoframe_data:
+  photoframe_cache:

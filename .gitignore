@@ -1,0 +1,35 @@
+# Abhängigkeiten und Build
+node_modules/
+dist/
+coverage/
+.vite/
+test-results/
+playwright-report/
+
+# Zugangsdaten und lokale Konfiguration
+.env
+.env.*
+!.env.dist
+certs/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Lokale Daten: Test-Bilder, Zustand, Cache
+testdata/
+.local/
+data/
+cache/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Editor, Werkzeuge, System
+.claude/settings.local.json
+.idea/
+.vscode/
+*.log
+.DS_Store
