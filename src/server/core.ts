@@ -59,6 +59,8 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
   private restartWanted = false;
   /** Wartezeit vor dem Neustart nach Sync (RESTART_DELAY_SEC) */
   private restartDelayTimer?: NodeJS.Timeout;
+  /** Beendet die Wartezeit vorzeitig; `false` = Neustart entfällt */
+  private restartDelayDone?: (proceed: boolean) => void;
   private syncRun?: Promise<void>;
   private syncAgain = false;
   private abortSync = false;
@@ -96,6 +98,9 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
       lastSuccessAt: store.get<number | null>('lastSyncAt', null),
       lastError: null,
       startsAt: null,
+      restartPlanned: false,
+      restartAt: null,
+      restartSkipped: null,
     };
   }
 
@@ -119,7 +124,7 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
     this.stopped = true;
     this.abortSync = true;
     for (const t of this.timers) clearTimeout(t);
-    clearTimeout(this.restartDelayTimer);
+    this.cancelRestartDelay();
     clearTimeout(this.pollTimer);
     clearTimeout(this.delayedSyncTimer);
     this.prepareGeneration += 1;
@@ -459,6 +464,10 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
     clearTimeout(this.delayedSyncTimer);
     this.delayedSyncTimer = undefined;
     this.abortSync = Boolean(this.syncRun);
+    if (this.restartDelayDone) {
+      this.cancelRestartDelay();
+      this.skipRestart('Neustart nach Sync entfällt – der Rahmen ist aus.');
+    }
     this.setDevice({ power: this.shelly ? false : this.device.power, cardOnline: false, booting: false, restarting: false });
     this.setSync({ startsAt: null, phase: this.syncRun ? this.sync.phase : 'idle' });
   }
@@ -478,12 +487,15 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
     this.restartGuardUntil = now + offMs + (this.cfg.bootTimeoutSec + this.cfg.powerOnSyncDelaySec + 60) * 1000;
     this.bootUntil = now + offMs + this.cfg.bootTimeoutSec * 1000;
     this.log.info({ source, offSec: this.cfg.restartOffSec }, 'Rahmen wird neu gestartet');
+    // Ein geplanter Neustart nach Sync ist damit erledigt.
+    this.restartWanted = false;
+    this.cancelRestartDelay();
 
     clearTimeout(this.delayedSyncTimer);
     this.delayedSyncTimer = undefined;
     this.abortSync = Boolean(this.syncRun);
     this.setDevice({ power: false, cardOnline: false, booting: true, restarting: true });
-    this.setSync({ startsAt: null, phase: this.syncRun ? this.sync.phase : 'idle' });
+    this.setSync({ startsAt: null, phase: this.syncRun ? this.sync.phase : 'idle', restartPlanned: false, restartAt: null, restartSkipped: null });
 
     // Kurz nach dem Wiedereinschalten prüfen – falls kein Webhook kommt.
     clearTimeout(this.pollTimer);
@@ -494,20 +506,29 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
   /** Neustart nach dem Sync (RESTART_AFTER_SYNC), mit Schutz gegen Schleifen. */
   private async restartAfterSync(): Promise<void> {
     if (!this.shelly || !this.cfg.restartAfterSync || this.stopped) return;
-    if (this.device.power !== true) return;
+    if (this.device.power !== true) {
+      this.skipRestart('Neustart nach Sync entfällt – der Rahmen ist aus.');
+      return;
+    }
 
     // Erst warten, bis die Karte ihre Schreibvorgänge abgeschlossen hat – ein
     // Stromausfall mitten im Schreiben kann das FAT-Dateisystem beschädigen.
     if (this.cfg.restartDelaySec > 0) {
       this.log.info({ delaySec: this.cfg.restartDelaySec }, 'Neustart nach Sync in Kürze – Karte schreibt fertig');
-      clearTimeout(this.restartDelayTimer);
-      await new Promise<void>((resolve) => {
-        this.restartDelayTimer = setTimeout(resolve, this.cfg.restartDelaySec * 1000);
+      this.cancelRestartDelay();
+      this.setSync({ restartPlanned: true, restartAt: Date.now() + this.cfg.restartDelaySec * 1000 });
+      const proceed = await new Promise<boolean>((resolve) => {
+        this.restartDelayDone = resolve;
+        this.restartDelayTimer = setTimeout(() => resolve(true), this.cfg.restartDelaySec * 1000);
         this.restartDelayTimer.unref();
       });
       this.restartDelayTimer = undefined;
-      if (this.stopped || this.device.power !== true) {
-        this.log.info('Neustart nach Sync entfällt – Rahmen ist aus');
+      this.restartDelayDone = undefined;
+      this.setSync({ restartAt: null });
+      // Abgebrochen: inzwischen von Hand neu gestartet oder App wird beendet.
+      if (!proceed || this.stopped) return;
+      if (this.device.power !== true) {
+        this.skipRestart('Neustart nach Sync entfällt – der Rahmen ist aus.');
         return;
       }
       // Läuft inzwischen ein neuer Sync, kommt der Neustart erst nach dessen Ende.
@@ -517,14 +538,31 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
       }
     }
     if (Date.now() < this.restartGuardUntil) {
-      this.log.info('Neustart nach Sync übersprungen – der Rahmen wurde gerade erst neu gestartet');
+      this.skipRestart('Neustart nach Sync übersprungen – der Rahmen wurde gerade erst neu gestartet.');
       return;
     }
     try {
       await this.restartFrame('nach Sync');
     } catch (err) {
       this.log.warn({ err }, 'Neustart nach Sync fehlgeschlagen');
+      this.setSync({ restartPlanned: false, restartAt: null, restartSkipped: `Neustart nach Sync fehlgeschlagen: ${(err as Error).message}` });
     }
+  }
+
+  /** Neustart nach Sync auslassen: protokollieren und in der Oberfläche anzeigen. */
+  private skipRestart(reason: string): void {
+    this.log.info(reason);
+    this.restartWanted = false;
+    this.setSync({ restartPlanned: false, restartAt: null, restartSkipped: reason });
+  }
+
+  /** Laufende Wartezeit vor dem Neustart nach Sync beenden, ohne neu zu starten. */
+  private cancelRestartDelay(): void {
+    clearTimeout(this.restartDelayTimer);
+    this.restartDelayTimer = undefined;
+    const done = this.restartDelayDone;
+    this.restartDelayDone = undefined;
+    done?.(false);
   }
 
   async setPower(on: boolean): Promise<void> {
@@ -600,7 +638,9 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
     const inRestartWindow = Date.now() < this.restartGuardUntil;
     this.lastAutoSyncSignature = this.planSignature;
     this.log.info({ reason }, 'Sync gestartet');
-    this.setSync({ phase: 'preparing', done: 0, total: 0, lastError: null });
+    // Wird dieser Sync etwas ändern, startet der Rahmen danach neu (Anzeige vorab).
+    const restartApplies = Boolean(this.shelly) && this.cfg.restartAfterSync && !inRestartWindow;
+    this.setSync({ phase: 'preparing', done: 0, total: 0, lastError: null, restartSkipped: null });
     try {
       const result = await runSync(this.named, {
         card,
@@ -609,7 +649,13 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
         log: this.log.child({ mod: 'sync' }),
         deleteExtra: this.cfg.flashair.deleteExtra,
         shouldAbort: () => this.abortSync || this.stopped,
-        onProgress: (p) => this.setSync({ phase: p.phase, done: p.done, total: p.total }),
+        onProgress: (p) =>
+          this.setSync({
+            phase: p.phase,
+            done: p.done,
+            total: p.total,
+            ...(restartApplies && p.phase !== 'preparing' && p.total > 0 ? { restartPlanned: true } : {}),
+          }),
       });
       this.store.set('cardReclaimableBytes', result.reclaimableBytes);
       if (result.freeBytes !== null) {
@@ -624,14 +670,20 @@ export class Core extends EventEmitter<{ message: [ServerMessage] }> {
         lastSuccessAt,
         lastError: result.failed ? `${result.failed} Bilder konnten nicht übertragen werden` : null,
       });
-      if (result.uploaded + result.deleted > 0 && !inRestartWindow) this.restartWanted = true;
+      const changed = result.uploaded + result.deleted > 0;
+      if (changed && restartApplies) this.restartWanted = true;
+      else if (changed && inRestartWindow && this.shelly && this.cfg.restartAfterSync) {
+        this.skipRestart('Kein Neustart nach diesem Sync – der Rahmen wurde gerade erst neu gestartet.');
+      }
+      this.setSync({ restartPlanned: this.restartWanted });
     } catch (err) {
       let message: string;
       if (err instanceof SyncAbortedError) message = 'Sync abgebrochen – wird beim nächsten Einschalten fortgesetzt';
       else if (err instanceof CardFullError) message = err.message;
       else message = `Sync fehlgeschlagen: ${(err as Error).message}`;
       this.log.warn({ err }, message);
-      this.setSync({ phase: 'idle', lastError: message });
+      // Ein Neustart aus einem früheren Lauf bleibt geplant.
+      this.setSync({ phase: 'idle', lastError: message, restartPlanned: this.restartWanted });
       if (!(err instanceof CardFullError) && !(err instanceof SyncAbortedError)) {
         const online = await card.isReachable();
         this.setDevice({ cardOnline: online });

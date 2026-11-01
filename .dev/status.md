@@ -22,7 +22,7 @@ Legende: ✅ umgesetzt und geprüft · 🟡 umgesetzt, Prüfung offen oder einge
 | FA-31 | ✅ | Standard `dcim` + `random` (siehe decisions.md). `core.test.ts`: zufällige Nummern, „neu mischen“, Wechsel des Schemas. Echte Karte: 125 Bilder zufällig nummeriert |
 | FA-32 – FA-34 | ✅ | `processor.test.ts`; auf der Karte: 800 × 600, Baseline, ohne EXIF, EXIF-Rotation korrekt |
 | FA-35 | ✅ | `op=108`, Icon online/offline |
-| FA-36 | 🟡 | Shelly schaltet (App, Taste am Plug, Neustart per `toggle_after` geprüft). Neustart nach Sync und Schleifenschutz in `restart.test.ts`. Der Plug schaltet den Rahmen noch nicht, Boot-Verhalten deshalb nicht real geprüft |
+| FA-36 | 🟡 | Shelly schaltet (App, Taste am Plug, Neustart per `toggle_after` geprüft). Neustart nach Sync und Schleifenschutz in `restart.test.ts`. UI zeigt geplanten Neustart (Countdown) und übersprungenen Neustart mit Grund, gegen Mocks geprüft. Der Plug schaltet den Rahmen noch nicht, Boot-Verhalten deshalb nicht real geprüft |
 | FA-37 | 🟡 | Webhook per `curl`: Token, 202, genau ein Sync nach 30 s. Webhook im Shelly noch nicht eingerichtet |
 | FA-38 | ✅ | „Frei auf der Karte“ in der Übertragungs-Karte |
 | FA-39, FA-40 | ✅ | Zwei Browser parallel: Speichern erscheint live im zweiten Client; Reconnect mit Backoff und Snapshot |

@@ -65,6 +65,9 @@ function usePersisted<T extends string | number>(key: string, initial: T, allowe
   return [value, set] as const;
 }
 
+/** Restzeit für Countdowns: „45 s“ bzw. „9:50 min“ */
+const countdown = (sec: number) => (sec < 60 ? `${sec} s` : `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')} min`);
+
 /** Sekündlich neu rendern, solange `active` (für Countdowns). */
 function useTicker(active: boolean): void {
   const [, setTick] = useState(0);
@@ -149,7 +152,7 @@ export function useModel(snap: Snapshot) {
   const dirty = !sameSelection(draft, snap.selection);
   const syncing = sync.phase === 'preparing' || sync.phase === 'uploading' || sync.phase === 'deleting';
   const online = device.cardOnline;
-  useTicker(sync.startsAt !== null);
+  useTicker(sync.startsAt !== null || sync.restartAt !== null);
 
   // --- Paginierung und Gruppen -----------------------------------------
   const pages = pageSize ? Math.max(1, Math.ceil(list.length / pageSize)) : 1;
@@ -260,7 +263,15 @@ export function useModel(snap: Snapshot) {
         : sync.phase === 'deleting'
           ? `Entferne überzählige Dateien · ${sync.done} von ${sync.total}`
           : `${fmt(sync.done)} von ${fmt(sync.total)} Dateien übertragen …`;
-    st = { cls: 'syncing', title: 'Synchronisiere', text };
+    st = { cls: 'syncing', title: 'Synchronisiere', text: sync.restartPlanned ? `${text} Danach startet der Rahmen neu.` : text };
+  } else if (sync.restartPlanned && !device.restarting) {
+    // Neustart nach Sync (FA-36): Wartezeit läuft, damit die Karte fertig schreibt.
+    const sec = sync.restartAt !== null ? Math.max(0, Math.ceil((sync.restartAt - Date.now()) / 1000)) : 0;
+    st = {
+      cls: 'pending',
+      title: 'Neustart geplant',
+      text: sec > 0 ? `Sync fertig – Rahmen startet in ${countdown(sec)} neu, damit er die neuen Bilder lädt.` : 'Sync fertig – Rahmen startet gleich neu.',
+    };
   } else if (sync.startsAt !== null) {
     const sec = Math.max(0, Math.ceil((sync.startsAt - Date.now()) / 1000));
     st = { cls: 'pending', title: 'Sync ausstehend', text: `Rahmen startet – Sync beginnt in ${sec} s.` };
@@ -273,7 +284,11 @@ export function useModel(snap: Snapshot) {
   } else if (dirty) {
     st = { cls: 'dirty', title: 'Nicht gespeichert', text: `Zuletzt synchronisiert ${lastSync}` };
   } else {
-    st = { cls: 'ok', title: 'Aktuell', text: sync.lastError ?? `Zuletzt synchronisiert ${lastSync}` };
+    st = {
+      cls: 'ok',
+      title: 'Aktuell',
+      text: sync.lastError ?? (sync.restartSkipped ? `Zuletzt synchronisiert ${lastSync} · ${sync.restartSkipped}` : `Zuletzt synchronisiert ${lastSync}`),
+    };
   }
 
   const tooBig = plan.availableBytes !== null && !dirty && plan.estimatedBytes > plan.availableBytes;
@@ -384,7 +399,15 @@ export function useModel(snap: Snapshot) {
             : 'Rahmen ist ausgeschaltet – einschalten',
     pwrDisabled: device.booting || device.power === null || busy,
     togglePower,
-    restartAria: device.restarting || device.booting ? 'Rahmen startet …' : device.power ? 'Rahmen neu starten' : 'Rahmen ist ausgeschaltet',
+    restartAria:
+      device.restarting || device.booting
+        ? 'Rahmen startet …'
+        : !device.power
+          ? 'Rahmen ist ausgeschaltet'
+          : sync.restartPlanned
+            ? 'Neustart nach Sync ist geplant – jetzt neu starten'
+            : 'Rahmen neu starten',
+    restartPlanned: sync.restartPlanned && !device.restarting,
     restartDisabled: device.power !== true || device.booting || syncing || busy,
     restart,
 

@@ -68,7 +68,7 @@ export function DevicePill({ m, withLabel }: { m: Model; withLabel?: boolean }) 
         </button>
       )}
       {device.powerConfigured && (
-        <button class="pwr" onClick={m.restart} disabled={m.restartDisabled} aria-label={m.restartAria} title={m.restartAria}>
+        <button class={`pwr ${m.restartPlanned ? 'planned' : ''}`} onClick={m.restart} disabled={m.restartDisabled} aria-label={m.restartAria} title={m.restartAria}>
           <I.Restart />
           {withLabel && <span aria-hidden="true">Neustart</span>}
         </button>

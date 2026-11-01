@@ -71,6 +71,12 @@ export interface SyncState {
   lastError: string | null;
   /** Unix-ms, wann ein verzögerter Sync (nach dem Einschalten) startet */
   startsAt: number | null;
+  /** Nach diesem Sync startet der Rahmen neu (RESTART_AFTER_SYNC) */
+  restartPlanned: boolean;
+  /** Unix-ms, wann der geplante Neustart nach der Wartezeit (RESTART_DELAY_SEC) erfolgt */
+  restartAt: number | null;
+  /** Warum der Neustart nach dem letzten Sync ausgelassen wurde; null = nicht ausgelassen */
+  restartSkipped: string | null;
 }
 
 export interface PlanSummary {

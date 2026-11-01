@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Core } from '../src/server/core.js';
+import type { SyncState } from '../src/shared/types.js';
 import { Store } from '../src/server/db.js';
 import { type FlashAirMock, startFlashAirMock } from './flashair-mock.js';
 import { silentLog, tempDir, testConfig, writeJpeg } from './helpers.js';
@@ -84,6 +85,30 @@ describe('Neustart nach Sync (RESTART_AFTER_SYNC)', () => {
     expect(shelly.restarts).toBe(1);
   });
 
+  it('meldet einen übersprungenen Neustart, wenn der Sync im Neustart-Fenster etwas ändert', async () => {
+    await setup();
+    shelly.onRestart = () => card.files.delete('IMG_0001.JPG');
+    await until(() => shelly.restarts === 1);
+    expect(core.sync.restartSkipped).toBeNull();
+    await settle();
+    await until(() => core.sync.restartSkipped !== null);
+    expect(core.sync.restartSkipped).toContain('gerade erst neu gestartet');
+    expect(core.sync.restartPlanned).toBe(false);
+  });
+
+  it('zeigt den geplanten Neustart schon während des Syncs an', async () => {
+    const seen: SyncState[] = [];
+    await setup({ RESTART_DELAY_SEC: '1' });
+    core.on('message', (msg) => {
+      if (msg.type === 'sync') seen.push(msg.sync);
+    });
+    await until(() => shelly.restarts === 1);
+    expect(seen.some((s) => s.phase === 'uploading' && s.restartPlanned)).toBe(true);
+    expect(seen.some((s) => s.phase === 'idle' && s.restartPlanned && s.restartAt !== null)).toBe(true);
+    // Nach dem Neustart ist nichts mehr geplant.
+    expect(core.sync).toMatchObject({ restartPlanned: false, restartAt: null, restartSkipped: null });
+  });
+
   it('wartet nach dem Sync RESTART_DELAY_SEC, bevor neu gestartet wird', async () => {
     await setup({ RESTART_DELAY_SEC: '2' });
     await until(() => card.files.size === 6 && core.sync.phase === 'idle' && core.sync.lastSuccessAt !== null);
@@ -95,11 +120,49 @@ describe('Neustart nach Sync (RESTART_AFTER_SYNC)', () => {
     expect(shelly.restarts).toBe(1);
   });
 
+  it('zeigt während der Wartezeit Neustart geplant mit Zeitpunkt an', async () => {
+    await setup({ RESTART_DELAY_SEC: '2' });
+    await until(() => core.sync.restartAt !== null);
+    expect(core.sync.restartPlanned).toBe(true);
+    expect(core.sync.restartAt! - Date.now()).toBeGreaterThan(1000);
+    expect(shelly.restarts).toBe(0);
+    await until(() => shelly.restarts === 1);
+    expect(core.sync).toMatchObject({ restartPlanned: false, restartAt: null });
+  });
+
+  it('Ausschalten in der Wartezeit: Neustart entfällt mit Meldung', async () => {
+    await setup({ RESTART_DELAY_SEC: '2' });
+    await until(() => core.sync.restartAt !== null);
+    await core.setPower(false);
+    expect(core.sync).toMatchObject({ restartPlanned: false, restartAt: null });
+    expect(core.sync.restartSkipped).toContain('Rahmen ist aus');
+    await sleep(2500);
+    expect(shelly.restarts).toBe(0);
+    expect(shelly.output).toBe(false);
+  });
+
+  it('Neustart per App in der Wartezeit ersetzt den geplanten Neustart', async () => {
+    await setup({ RESTART_DELAY_SEC: '2' });
+    await until(() => core.sync.restartAt !== null);
+    await core.restartFrame('App');
+    expect(core.sync).toMatchObject({ restartPlanned: false, restartAt: null, restartSkipped: null });
+    await sleep(2500);
+    await settle(0);
+    expect(shelly.restarts).toBe(1);
+    expect(core.sync.restartSkipped).toBeNull();
+  });
+
   it('startet nicht neu, wenn RESTART_AFTER_SYNC=false', async () => {
     await setup({ RESTART_AFTER_SYNC: 'false' });
     await until(() => card.files.size === 6 && core.sync.phase === 'idle');
     await sleep(1500);
     expect(shelly.restarts).toBe(0);
+  });
+
+  it('ohne Neustart nach Sync: kein Hinweis auf geplanten oder übersprungenen Neustart', async () => {
+    await setup({ RESTART_AFTER_SYNC: 'false' });
+    await until(() => card.files.size === 6 && core.sync.phase === 'idle' && core.sync.lastSuccessAt !== null);
+    expect(core.sync).toMatchObject({ restartPlanned: false, restartAt: null, restartSkipped: null });
   });
 
   it('Neustart per App: aus, nach RESTART_OFF_SEC wieder an, danach verzögerter Sync ohne weiteren Neustart', async () => {
