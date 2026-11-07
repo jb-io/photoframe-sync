@@ -40,13 +40,13 @@
     "@types/ws": "^8.18.2",
     "concurrently": "^10.0.6",
     "eslint": "^10.14.0",
-    "globals": "^17.13.0",
+    "globals": "^17.14.0",
     "playwright": "^1.64.1",
     "preact": "^11.1.1",
     "tsx": "^4.23.15",
     "typescript": "~6.0",
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
